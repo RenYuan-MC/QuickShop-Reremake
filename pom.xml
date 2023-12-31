@@ -236,6 +236,10 @@
                             <pattern>de.leonhard.storage.</pattern>
                             <shadedPattern>org.maxgamer.quickshop.shade.de.leonhard.storage.</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>space.arim.</pattern>
+                            <shadedPattern>org.maxgamer.quickshop.shade.space.arim.</shadedPattern>
+                        </relocation>
                     </relocations>
                     <transformers>
                         <transformer
@@ -356,6 +360,10 @@
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
+        <repository>
+            <id>arim-mvn-lgpl3</id>
+            <url>https://mvn-repo.arim.space/lesser-gpl3/</url>
+        </repository>
         <!--Disable for 503
         <repository>
             <id>sk89q-repo</id>
@@ -444,6 +452,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.22</version>
+        </dependency>
+        <dependency>
+            <groupId>space.arim.morepaperlib</groupId>
+            <artifactId>morepaperlib</artifactId>
+            <version>0.4.3</version>
         </dependency>
         <dependency>
             <groupId>com.griefcraft.lwc</groupId>

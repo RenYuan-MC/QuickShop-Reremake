@@ -83,6 +83,7 @@ import org.maxgamer.quickshop.util.holder.Result;
 import org.maxgamer.quickshop.util.reload.ReloadResult;
 import org.maxgamer.quickshop.util.reload.ReloadStatus;
 import org.maxgamer.quickshop.util.reload.Reloadable;
+import space.arim.morepaperlib.MorePaperLib;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -167,7 +168,7 @@ public class SimpleShopManager implements ShopManager, Reloadable {
 
     @Override
     public ReloadResult reloadModule() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::init);
+        plugin.getMorePaperLib().scheduling().asyncScheduler().run(this::init);
         return ReloadResult.builder().status(ReloadStatus.SCHEDULED).build();
     }
 
@@ -867,8 +868,12 @@ public class SimpleShopManager implements ShopManager, Reloadable {
         return taxEvent.getTax();
     }
 
-    public void actionCreate(@NotNull Player p, Info info, @NotNull String message) {
-        Util.ensureThread(false);
+    public void actionCreate(@NotNull Player p, Info info, @NotNull String message){
+        plugin.getMorePaperLib().scheduling().entitySpecificScheduler(p).run(() -> actionCreate0(p,info,message),null);
+    }
+
+    private void actionCreate0(@NotNull Player p, Info info, @NotNull String message) {
+
         if (plugin.getEconomy() == null) {
             MsgUtil.sendDirectMessage(p, "Error: Economy system not loaded, type /qs main command to get details.");
             return;
@@ -1348,7 +1353,10 @@ public class SimpleShopManager implements ShopManager, Reloadable {
     }
 
     private void actionTrade(@NotNull Player p, Info info, @NotNull String message) {
-        Util.ensureThread(false);
+        plugin.getMorePaperLib().scheduling().entitySpecificScheduler(p).run(() -> actionTrade0(p,info,message),null);
+    }
+
+    private void actionTrade0(@NotNull Player p, Info info, @NotNull String message) {
         if (plugin.getEconomy() == null) {
             MsgUtil.sendDirectMessage(p, "Error: Economy system not loaded, type /qs main command to get details.");
             return;

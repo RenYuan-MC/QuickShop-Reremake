@@ -22,14 +22,14 @@ package org.maxgamer.quickshop.watcher;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.maxgamer.quickshop.QuickShop;
 import org.maxgamer.quickshop.api.event.CalendarEvent;
 import org.maxgamer.quickshop.util.Util;
+import space.arim.morepaperlib.scheduling.ScheduledTask;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Calendar;
 import java.util.logging.Level;
 
@@ -38,13 +38,13 @@ import java.util.logging.Level;
  *
  * @author Ghost_chu
  */
-public class CalendarWatcher extends BukkitRunnable {
+public class CalendarWatcher implements Runnable {
     @Getter
     private final File calendarFile = new File(Util.getCacheFolder(), "calendar.cache");
     @Getter
     private final YamlConfiguration configuration;
     private final QuickShop plugin;
-    private BukkitTask task;
+    private ScheduledTask task;
 
     public CalendarWatcher(QuickShop plugin) {
         this.plugin = plugin;
@@ -59,7 +59,7 @@ public class CalendarWatcher extends BukkitRunnable {
     }
 
     public void start() {
-        task = this.runTaskTimerAsynchronously(plugin, 20, 20);
+        task = plugin.getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(this, Duration.ofSeconds(1), Duration.ofSeconds(1));
     }
 
     public void stop() {

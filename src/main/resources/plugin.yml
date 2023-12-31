@@ -39,6 +39,7 @@ authors:
   - harry0198
   - efekurbann
   - tdiant
+  - RENaa_FD
 description: Economy Shops plugin
 softdepend:
   - Vault
@@ -70,6 +71,8 @@ softdepend:
   - IridiumSkyblock
   - FabledSkyblock
   - NBTAPI
+
+folia-supported: true
 
 api-version: 1.15
 

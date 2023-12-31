@@ -19,6 +19,7 @@
 
 package org.maxgamer.quickshop.listener;
 
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -47,11 +48,13 @@ public class ChunkListener extends AbstractQSListener {
         if (inChunk == null) {
             return;
         }
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            for (Shop shop : inChunk.values()) {
-                shop.onLoad();
-            }
-        }, 1);
+
+        Chunk chunk = e.getChunk();
+        plugin.getMorePaperLib().scheduling().regionSpecificScheduler(e.getWorld(),chunk.getX(),chunk.getZ()).runDelayed(() -> {
+                    for (Shop shop : inChunk.values()) {
+                        shop.onLoad();
+                    }
+                }, 1);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

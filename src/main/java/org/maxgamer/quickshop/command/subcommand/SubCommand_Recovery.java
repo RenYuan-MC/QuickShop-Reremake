@@ -42,7 +42,7 @@ public class SubCommand_Recovery implements CommandHandler<ConsoleCommandSender>
             MsgUtil.sendDirectMessage(sender, "recovery.txt doesn't exist! Do not execute this command unless you know what are you doing.");
             return;
         }
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             try {
                 Util.backupDatabase();
                 plugin.getShopLoader().recoverFromFile(Util.readToString(file));

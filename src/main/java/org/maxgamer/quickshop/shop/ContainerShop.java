@@ -1538,7 +1538,10 @@ public class ContainerShop implements Shop {
      * Check the container still there and we can keep use it.
      */
     public void checkContainer() {
-        Util.ensureThread(false);
+        plugin.getMorePaperLib().scheduling().regionSpecificScheduler(this.getLocation()).run(this::checkContainer0);
+    }
+
+    public void checkContainer0(){
         if (!this.isLoaded) {
             return;
         }
@@ -1547,7 +1550,7 @@ public class ContainerShop implements Shop {
         }
         if (!Util.canBeShop(this.getLocation().getBlock())) {
             Util.debugLog("Shop at " + this.getLocation() + "@" + this.getLocation().getBlock()
-                    + " container was missing, deleting...");
+                          + " container was missing, deleting...");
             plugin.logEvent(new ShopRemoveLog(Util.getNilUniqueId(), "Container invalid", saveToInfoStorage()));
             this.onUnload();
             this.delete(false);

@@ -39,7 +39,7 @@ public class SubCommand_Update implements CommandHandler<CommandSender> {
 
     @Override
     public void onCommand(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] cmdArg) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             MsgUtil.sendDirectMessage(sender, ChatColor.YELLOW + "Checking for updates...");
 
             if (plugin.getUpdateWatcher() == null) {

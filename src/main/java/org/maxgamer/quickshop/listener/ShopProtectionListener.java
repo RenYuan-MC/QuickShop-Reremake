@@ -131,7 +131,7 @@ public class ShopProtectionListener extends AbstractProtectionListener {
 
                 //Printing warning
                 if (disableHopperMoveEvents) {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    plugin.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
                         plugin.getLogger()
                                 .warning("World " + world.getName()
                                         + " have shops and Hopper protection is enabled. But we detected" +

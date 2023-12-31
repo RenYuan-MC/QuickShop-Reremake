@@ -19,12 +19,11 @@
 
 package org.maxgamer.quickshop.watcher;
 
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.api.shop.AbstractDisplayItem;
 
 @Deprecated
-public class DisplayDupeRemoverWatcher extends BukkitRunnable {
+public class DisplayDupeRemoverWatcher implements Runnable {
     @Override
     public void run() {
     }

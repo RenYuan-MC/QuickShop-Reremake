@@ -99,7 +99,7 @@ public class SubCommand_Convert implements CommandHandler<ConsoleCommandSender> 
             }
             running = true;
             final String finalPrefix = prefix;
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            plugin.getMorePaperLib().scheduling().asyncScheduler().run(() -> {
                 try {
                     AbstractDatabaseCore dbCore = new MySQLCore(plugin, Objects.requireNonNull(host, "MySQL host can't be null"), Objects.requireNonNull(user, "MySQL username can't be null"), Objects.requireNonNull(pass, "MySQL password can't be null"), Objects.requireNonNull(databaseStr, "MySQL database name can't be null"), Objects.requireNonNull(port, "MySQL port can't be null"), finalPrefix, useSSL, optionsMap);
                     DatabaseManager databaseManager = new DatabaseManager(QuickShop.getInstance(), dbCore);
@@ -120,7 +120,7 @@ public class SubCommand_Convert implements CommandHandler<ConsoleCommandSender> 
                 return;
             }
             running = true;
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            plugin.getMorePaperLib().scheduling().asyncScheduler().run(() -> {
                 try {
                     AbstractDatabaseCore core = new SQLiteCore(plugin, new File(plugin.getDataFolder(), "shops.db"));
                     DatabaseManager databaseManager = new DatabaseManager(QuickShop.getInstance(), core);

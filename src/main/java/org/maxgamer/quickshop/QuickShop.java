@@ -46,8 +46,6 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,20 +77,7 @@ import org.maxgamer.quickshop.economy.Economy_TNE;
 import org.maxgamer.quickshop.economy.Economy_Vault;
 import org.maxgamer.quickshop.integration.SimpleIntegrationManager;
 import org.maxgamer.quickshop.integration.worldguard.WorldGuardIntegration;
-import org.maxgamer.quickshop.listener.BlockListener;
-import org.maxgamer.quickshop.listener.ChatListener;
-import org.maxgamer.quickshop.listener.ChunkListener;
-import org.maxgamer.quickshop.listener.ClearLaggListener;
-import org.maxgamer.quickshop.listener.CustomInventoryListener;
-import org.maxgamer.quickshop.listener.DisplayProtectionListener;
-import org.maxgamer.quickshop.listener.EconomySetupListener;
-import org.maxgamer.quickshop.listener.InternalListener;
-import org.maxgamer.quickshop.listener.LockListener;
-import org.maxgamer.quickshop.listener.PlayerListener;
-import org.maxgamer.quickshop.listener.PluginListener;
-import org.maxgamer.quickshop.listener.ShopProtectionListener;
-import org.maxgamer.quickshop.listener.SignListener;
-import org.maxgamer.quickshop.listener.WorldListener;
+import org.maxgamer.quickshop.listener.*;
 import org.maxgamer.quickshop.listener.worldedit.WorldEditAdapter;
 import org.maxgamer.quickshop.localization.text.SimpleTextManager;
 import org.maxgamer.quickshop.nonquickshopstuff.com.rylinaux.plugman.util.PluginUtil;
@@ -133,8 +118,11 @@ import org.maxgamer.quickshop.watcher.LogWatcher;
 import org.maxgamer.quickshop.watcher.OngoingFeeWatcher;
 import org.maxgamer.quickshop.watcher.ShopContainerWatcher;
 import org.maxgamer.quickshop.watcher.SignUpdateWatcher;
-import org.maxgamer.quickshop.watcher.TpsWatcher;
 import org.maxgamer.quickshop.watcher.UpdateWatcher;
+import space.arim.morepaperlib.MorePaperLib;
+import space.arim.morepaperlib.scheduling.AsynchronousScheduler;
+import space.arim.morepaperlib.scheduling.RegionalScheduler;
+import space.arim.morepaperlib.scheduling.ScheduledTask;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -146,17 +134,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.StringJoiner;
-import java.util.UUID;
 import java.util.logging.Level;
 
 public class QuickShop extends JavaPlugin implements QuickShopAPI {
@@ -184,14 +164,12 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
      * The shop limites.
      */
     private final ConfigProvider configProvider = new ConfigProvider(this, new File(getDataFolder(), "config.yml"));
-    private final List<BukkitTask> timerTaskList = new ArrayList<>(3);
+    private final List<ScheduledTask> timerTaskList = new ArrayList<>(3);
     @Getter
     private final ReloadManager reloadManager = new ReloadManager();
     /* Public QuickShop API End */
     @Getter
     private final QuickChat quickChat = new BungeeQuickChat(this);
-    @Getter
-    private final TpsWatcher tpsWatcher = new TpsWatcher();
     boolean onLoadCalled = false;
     private SimpleIntegrationManager integrationHelper;
     private SimpleDatabaseHelper databaseHelper;
@@ -323,6 +301,12 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
     @Nullable
     private NBTAPI nbtapi = null;
 
+    /**
+     * For folia support
+     */
+    @Getter
+    private MorePaperLib morePaperLib;
+
     private int loggingLocation = 0;
 
     public void disableNBTAPI() {
@@ -373,7 +357,7 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
      * @return The fork name.
      */
     public static String getFork() {
-        return "Reremake";
+        return "Reremake-Folia";
     }
 
     public IntegrationManager getIntegrationHelper() {
@@ -771,9 +755,9 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         if (logWatcher != null) {
             logWatcher.close();
         }
-        Iterator<BukkitTask> taskIterator = timerTaskList.iterator();
+        Iterator<ScheduledTask> taskIterator = timerTaskList.iterator();
         while (taskIterator.hasNext()) {
-            BukkitTask task = taskIterator.next();
+            ScheduledTask task = taskIterator.next();
             if (!task.isCancelled()) {
                 task.cancel();
             }
@@ -781,11 +765,6 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         }
         if (calendarWatcher != null) {
             calendarWatcher.stop();
-        }
-
-        try {
-            tpsWatcher.cancel();
-        } catch (IllegalStateException ignored) {
         }
 
         /* Unload UpdateWatcher */
@@ -796,7 +775,7 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         Util.debugLog("Cleanup tasks...");
 
         try {
-            Bukkit.getScheduler().cancelTasks(this);
+            getMorePaperLib().scheduling().cancelGlobalTasks();
         } catch (Throwable ignored) {
         }
 
@@ -956,6 +935,8 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
 
         getLogger().info("QuickShop " + getFork());
 
+        morePaperLib = new MorePaperLib(this);
+
         /* Check the running envs is support or not. */
         getLogger().info("Starting plugin self-test, please wait...");
         runtimeCheck(EnvCheckEntry.Stage.ON_ENABLE);
@@ -1009,7 +990,8 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         if (this.display && getConfig().getBoolean("shop.display-auto-despawn")) {
             this.displayAutoDespawnWatcher = new DisplayAutoDespawnWatcher(this);
             //BUKKIT METHOD SHOULD ALWAYS EXECUTE ON THE SERVER MAIN THEAD
-            timerTaskList.add(this.displayAutoDespawnWatcher.runTaskTimer(this, 20, getConfig().getInt("shop.display-check-time"))); // not worth async
+            ScheduledTask task = getMorePaperLib().scheduling().globalRegionalScheduler().runAtFixedRate(this.displayAutoDespawnWatcher, 20, getConfig().getInt("shop.display-check-time"));
+            timerTaskList.add(task); // not worth async
         }
 
         getLogger().info("Registering commands...");
@@ -1079,7 +1061,7 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
                     getLogger().severe("Shop.display-items-check-ticks is too low! It may cause HUGE lag! Pick a number > 3000");
                 }
                 getLogger().info("Registering DisplayCheck task....");
-                timerTaskList.add(getServer().getScheduler().runTaskTimer(this, () -> {
+                timerTaskList.add(getMorePaperLib().scheduling().globalRegionalScheduler().runAtFixedRate(() -> {
                     for (Shop shop : getShopManager().getLoadedShops()) {
                         //Shop may be deleted or unloaded when iterating
                         if (shop.isDeleted() || !shop.isLoaded()) {
@@ -1115,37 +1097,34 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         /* Delay the Ecoonomy system load, give a chance to let economy system register. */
         /* And we have a listener to listen the ServiceRegisterEvent :) */
         Util.debugLog("Loading economy system...");
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                loadEcon();
-                new EconomySetupListener(QuickShop.this).register();
-            }
-        }.runTaskLater(this, 1);
+        getMorePaperLib().scheduling().globalRegionalScheduler().runDelayed(() -> {
+            loadEcon();
+            new EconomySetupListener(QuickShop.this).register();
+        }, 1);
         Util.debugLog("Registering watchers...");
         calendarWatcher = new CalendarWatcher(this);
         // shopVaildWatcher.runTaskTimer(this, 0, 20 * 60); // Nobody use it
-        timerTaskList.add(signUpdateWatcher.runTaskTimer(this, 0, 10));
-        timerTaskList.add(shopContainerWatcher.runTaskTimer(this, 0, 5)); // Nobody use it
+        RegionalScheduler globalScheduler = getMorePaperLib().scheduling().globalRegionalScheduler();
+        AsynchronousScheduler asyncScheduler = getMorePaperLib().scheduling().asyncScheduler();
+
+        timerTaskList.add(globalScheduler.runAtFixedRate(signUpdateWatcher, 1, 10));
+        timerTaskList.add(globalScheduler.runAtFixedRate(shopContainerWatcher, 1, 5)); // Nobody use it
 
         if (logWatcher != null) {
-            timerTaskList.add(logWatcher.runTaskTimerAsynchronously(this, 10, 10));
+            timerTaskList.add(asyncScheduler.runAtFixedRate(logWatcher, Duration.ofMillis(10 * 50), Duration.ofMillis(10 * 50)));
             getLogger().info("Log actions is enabled, actions will log in the qs.log file!");
         }
         if (getConfig().getBoolean("shop.ongoing-fee.enable")) {
             ongoingFeeWatcher = new OngoingFeeWatcher(this);
-            timerTaskList.add(ongoingFeeWatcher.runTaskTimerAsynchronously(this, 0, getConfig().getInt("shop.ongoing-fee.ticks")));
+            timerTaskList.add(asyncScheduler.runAtFixedRate(ongoingFeeWatcher, Duration.ofMillis(1), Duration.ofMillis(getConfig().getInt("shop.ongoing-fee.ticks") * 50L)));
             getLogger().info("Ongoing fee feature is enabled.");
         }
         integrationHelper.searchAndRegisterPlugins();
         this.integrationHelper.callIntegrationsLoad(IntegrateStage.onEnableAfter);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                getLogger().info("Registering bStats metrics...");
-                submitMetrics();
-            }
-        }.runTask(this);
+        getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
+            getLogger().info("Registering bStats metrics...");
+            submitMetrics();
+        });
         if (loaded) {
             getServer().getPluginManager().callEvent(new QSConfigurationReloadEvent(this));
         } else {
@@ -1153,7 +1132,7 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         }
         calendarWatcher = new CalendarWatcher(this);
         calendarWatcher.start();
-        tpsWatcher.runTaskTimer(this, 1000, 50);
+
         this.shopPurger = new ShopPurger(this);
         if (getConfig().getBoolean("purge.at-server-startup")) {
             shopPurger.purge();
@@ -1161,7 +1140,7 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         //Detect and do offline player name to uuid caching
         OfflinePlayer[] offlinePlayers = getServer().getOfflinePlayers();
         if (offlinePlayers.length > 2000) {
-            getServer().getScheduler().runTaskAsynchronously(this, () -> PlayerFinder.doLargeOfflineCachingWork(this, offlinePlayers));
+            getMorePaperLib().scheduling().asyncScheduler().run(() -> PlayerFinder.doLargeOfflineCachingWork(this, offlinePlayers));
         }
         Util.debugLog("Now using display-type: " + AbstractDisplayItem.getNowUsing().name());
         getLogger().info("QuickShop Loaded! " + enableTimer.stopAndGetTimePassed() + " ms.");
@@ -2311,7 +2290,7 @@ public class QuickShop extends JavaPlugin implements QuickShopAPI {
         if (unregisterListeners) {
             HandlerList.unregisterAll(this);
         }
-        Bukkit.getScheduler().cancelTasks(this);
+        getMorePaperLib().scheduling().cancelGlobalTasks();
     }
 
     public void registerCustomCommands() {

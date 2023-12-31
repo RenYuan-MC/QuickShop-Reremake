@@ -56,7 +56,7 @@ public class SubCommand_CleanGhost implements CommandHandler<CommandSender> {
                 ChatColor.GREEN
                         + "Starting to check for ghost shops (missing container blocks). All non-existing shops will be removed...");
 
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             MsgUtil.sendDirectMessage(sender, ChatColor.GREEN + "Starting async thread, please wait...");
             Util.backupDatabase(); // Already warn the user, don't care about backup result.
             for (Shop shop : plugin.getShopManager().getAllShops()) {

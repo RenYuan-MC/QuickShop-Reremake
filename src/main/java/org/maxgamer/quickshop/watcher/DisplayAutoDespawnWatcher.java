@@ -24,7 +24,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.QuickShop;
 import org.maxgamer.quickshop.api.shop.AbstractDisplayItem;
@@ -35,7 +34,7 @@ import org.maxgamer.quickshop.util.reload.ReloadStatus;
 import org.maxgamer.quickshop.util.reload.Reloadable;
 
 @AllArgsConstructor
-public class DisplayAutoDespawnWatcher extends BukkitRunnable implements Reloadable {
+public class DisplayAutoDespawnWatcher implements Runnable, Reloadable {
     private final QuickShop plugin;
     private int range;
 

@@ -21,7 +21,6 @@ package org.maxgamer.quickshop.database;
 
 import lombok.Getter;
 import org.bukkit.plugin.IllegalPluginAccessException;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.maxgamer.quickshop.QuickShop;
@@ -31,12 +30,14 @@ import org.maxgamer.quickshop.util.WarningSender;
 import org.maxgamer.quickshop.util.reload.ReloadResult;
 import org.maxgamer.quickshop.util.reload.ReloadStatus;
 import org.maxgamer.quickshop.util.reload.Reloadable;
+import space.arim.morepaperlib.scheduling.ScheduledTask;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -59,7 +60,7 @@ public class DatabaseManager implements Reloadable {
     private final WarningSender warningSender;
     private boolean useQueue;
     @Nullable
-    private BukkitTask task;
+    private ScheduledTask task;
 
     /**
      * Queued database manager. Use queue to solve run SQL make server lagg issue.
@@ -93,11 +94,11 @@ public class DatabaseManager implements Reloadable {
         }
         if (useQueue) {
             try {
-                task = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+                task = plugin.getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(() -> {
                     if (!task.isCancelled()) {
                         plugin.getDatabaseManager().runTask();
                     }
-                }, 1, plugin.getConfig().getLong("database.queue-commit-interval") * 20);
+                }, Duration.ofMillis(1), Duration.ofSeconds(plugin.getConfig().getLong("database.queue-commit-interval")));
             } catch (IllegalPluginAccessException e) {
                 Util.debugLog("Plugin is disabled but trying create database task, move to Main Thread...");
                 plugin.getDatabaseManager().runTask();

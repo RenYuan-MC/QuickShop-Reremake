@@ -21,7 +21,6 @@ package org.maxgamer.quickshop.watcher;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.maxgamer.quickshop.QuickShop;
 import org.maxgamer.quickshop.api.economy.EconomyTransaction;
@@ -43,7 +42,7 @@ import java.util.UUID;
  * Check the shops after server booted up, make sure shop can correct self-deleted when container
  * lost.
  */
-public class OngoingFeeWatcher extends BukkitRunnable {
+public class OngoingFeeWatcher implements Runnable {
     private final QuickShop plugin;
     private final WarningSender warningSender;
 

@@ -1358,7 +1358,7 @@ public class Util {
         }
         file.createNewFile();
 
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             StringBuilder finalReport = new StringBuilder();
             plugin.getShopLoader()
                     .getOriginShopsInDatabase()
@@ -1511,7 +1511,7 @@ public class Util {
         if (Bukkit.isPrimaryThread()) {
             runnable.run();
         } else {
-            Bukkit.getScheduler().runTask(QuickShop.getInstance(), runnable);
+            QuickShop.getInstance().getMorePaperLib().scheduling().globalRegionalScheduler().run(runnable);
         }
     }
 

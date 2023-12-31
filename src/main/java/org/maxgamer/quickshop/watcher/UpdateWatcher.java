@@ -25,13 +25,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitTask;
 import org.maxgamer.quickshop.QuickShop;
 import org.maxgamer.quickshop.util.MsgUtil;
 import org.maxgamer.quickshop.util.updater.QuickUpdater;
 import org.maxgamer.quickshop.util.updater.VersionType;
 import org.maxgamer.quickshop.util.updater.impl.MavenUpdater;
+import space.arim.morepaperlib.scheduling.ScheduledTask;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Random;
 
@@ -40,18 +41,18 @@ public class UpdateWatcher implements Listener {
 
     private final QuickUpdater updater = new MavenUpdater(QuickShop.getInstance().getBuildInfo());
     private final Random random = new Random();
-    private BukkitTask cronTask = null;
+    private ScheduledTask cronTask = null;
 
     public QuickUpdater getUpdater() {
         return updater;
     }
 
-    public BukkitTask getCronTask() {
+    public ScheduledTask getCronTask() {
         return cronTask;
     }
 
     public void init() {
-        cronTask = QuickShop.getInstance().getServer().getScheduler().runTaskTimerAsynchronously(QuickShop.getInstance(), () -> {
+        cronTask = QuickShop.getInstance().getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(() -> {
             if (!updater.isLatest()) {
                 if (updater.getCurrentRunning() == VersionType.STABLE) {
                     QuickShop.getInstance()
@@ -120,7 +121,7 @@ public class UpdateWatcher implements Listener {
                 }
             }
 
-        }, 1, 20 * 60 * 60);
+        }, Duration.ofMillis(1), Duration.ofSeconds(60 * 60));
     }
 
     public void uninit() {
@@ -133,7 +134,7 @@ public class UpdateWatcher implements Listener {
     @EventHandler
     public void playerJoin(PlayerJoinEvent e) {
 
-        QuickShop.getInstance().getServer().getScheduler().runTaskLaterAsynchronously(QuickShop.getInstance(), () -> {
+        QuickShop.getInstance().getMorePaperLib().scheduling().asyncScheduler().runDelayed(() -> {
             if (!QuickShop.getPermissionManager().hasPermission(e.getPlayer(), "quickshop.alerts") || getUpdater().isLatest()) {
                 return;
             }
@@ -147,7 +148,7 @@ public class UpdateWatcher implements Listener {
             e.getPlayer().sendMessage(ChatColor.GREEN + "Type command " + ChatColor.YELLOW + "/qs update" + ChatColor.GREEN + " or click the link below to update QuickShop :)");
             e.getPlayer().sendMessage(ChatColor.AQUA + " https://www.spigotmc.org/resources/62575/");
             e.getPlayer().sendMessage(ChatColor.GREEN + "---------------------------------------------------");
-        }, 80);
+        }, Duration.ofMillis(80 * 50));
     }
 
 }

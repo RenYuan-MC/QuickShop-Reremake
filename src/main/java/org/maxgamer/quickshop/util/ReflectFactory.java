@@ -103,42 +103,6 @@ public class ReflectFactory {
         return nmsVersion;
     }
 
-    /**
-     * Get MinecraftServer's TPS
-     *
-     * @return TPS (e.g 19.92)
-     */
-    @NotNull
-    public static Double getTPS() {
-        return QuickShop.getInstance().getTpsWatcher().getAverageTPS();
-//        if (serverInstance == null || tpsField == null) {
-//            try {
-//                serverInstance = getNMSClass("MinecraftServer").getMethod("getServer").invoke(null);
-//                tpsField = serverInstance.getClass().getField("recentTps");
-//            } catch (NoSuchFieldException
-//                    | SecurityException
-//                    | IllegalAccessException
-//                    | IllegalArgumentException
-//                    | InvocationTargetException
-//                    | NoSuchMethodException e) {
-//                serverInstance = null;
-//                tpsField = null;
-//                Util.debugLog("Failed to get TPS " + e.getMessage());
-//                try {
-//
-//                }catch (Exception exception){
-//                    return 20.0;
-//                }
-//            }
-//        }
-//        try {
-//            double[] tps = ((double[]) tpsField.get(serverInstance));
-//            return tps[0];
-//        } catch (IllegalAccessException ignored) {
-//            return 20.0;
-//        }
-    }
-
     @NotNull
     public static Class<?> getNMSClass(@Nullable String className) {
         if (cachedNMSClass != null) {
