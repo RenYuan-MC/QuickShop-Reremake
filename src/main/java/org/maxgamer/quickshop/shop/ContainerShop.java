@@ -486,8 +486,12 @@ public class ContainerShop implements Shop {
      */
     @Override
     public void delete() {
-        Util.ensureThread(false);
         delete(false);
+    }
+
+    @Override
+    public void delete(boolean memoryOnly) {
+        plugin.getMorePaperLib().scheduling().regionSpecificScheduler(getLocation()).run(() -> delete0(memoryOnly));
     }
 
     /**
@@ -495,9 +499,7 @@ public class ContainerShop implements Shop {
      *
      * @param memoryOnly whether to delete from database
      */
-    @Override
-    public void delete(boolean memoryOnly) {
-        Util.ensureThread(false);
+    public void delete0(boolean memoryOnly) {
         // Get a copy of the attached shop to save it from deletion
         ContainerShop neighbor = getAttachedShop();
         setDirty();
